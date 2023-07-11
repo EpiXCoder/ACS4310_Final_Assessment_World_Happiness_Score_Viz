@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Bar Chart</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.9.1/d3-tip.min.js"></script>
+    <style>
+
+        .bar:hover {
+            fill: rgb(0, 0, 0);
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: black;
+            shape-rendering: crispEdges;
+        }
+
+        .axis text {
+            fill: black;
+        }
+
+        .d3-tip {
+            line-height: 1;
+            font-weight: bold;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            border-radius: 2px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 10px;
+        }
+
+        .d3-tip:after {
+            box-sizing: border-box;
+            display: inline;
+            font-size: 10px;
+            width: 100%;
+            line-height: 1;
+            color: rgba(0, 0, 0, 0.8);
+            content: "\25BC";
+            position: absolute;
+            text-align: center;
+        }
+
+        .d3-tip.n:after {
+            margin: -1px 0 0 0;
+            top: 100%;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+<h3>Top Countries with Highest Hapiness Scores in the World in 2019</h3>
+<svg width="960" height="600"></svg>
+<script>
+    var svg = d3.select("svg"),
+        margin = {top: 20, right: 20, bottom: 100, left: 80},
+        width = +svg.attr("width") - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top - margin.bottom,
+        x = d3.scaleBand().rangeRound([0, width]).padding(0.1),
+        y = d3.scaleLinear().rangeRound([height, 0]),
+        g = svg.append("g")
+               .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    var tip = d3.tip()
+                 .attr('class', 'd3-tip')
+                 .offset([-10, 0])
+                 .html(function(d) {
+                     return "<strong>Country:</strong> <span style='color:red'>" + d['Country or region'] + "</span>" +
+                         "<br><strong>Happiness Score:</strong> <span style='color:red'>" + d.Score + "</span>" +
+                         "<br><strong>GDP per Capita:</strong> <span style='color:red'>" + d['GDP per capita'] + "</span>" +
+                         "<br><strong>Social Support:</strong> <span style='color:red'>" + d['Social support'] + "</span>" +
+                         "<br><strong>Healthy Life Expectancy:</strong> <span style='color:red'>" + d['Healthy life expectancy'] + "</span>" +
+                         "<br><strong>Freedom to make life choices:</strong> <span style='color:red'>" + d['Freedom to make life choices'] + "</span>" +
+                         "<br><strong>Generosity:</strong> <span style='color:red'>" + d.Generosity + "</span>" +
+                         "<br><strong>Perceptions of corruption:</strong> <span style='color:red'>" + d['Perceptions of corruption'] + "</span>";
+                 });
+
+    svg.call(tip);
+
+    d3.csv("data.csv").then(function(data) {
+
+        data.forEach(function(d) {
+            d.Score = +d.Score;
+        });
+
+        data.sort(function(a, b) { return a['Overall rank'] - b['Overall rank']; });
+        data = data.slice(0, 10);
+
+        x.domain(data.map(function(d) { return d['Country or region']; }));
+        y.domain([7.0, 8.0]);
+
+        g.append("g")
+            .attr("class", "axis axis--x")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x))
+            .append("text")
+            .attr("y", 40)
+            .attr("x", width / 2)
+            .attr("text-anchor", "middle")
+            .text("Countries or Regions");
+
+        g.append("g")
+            .attr("class", "axis axis--y")
+            .call(d3.axisLeft(y).ticks(10, ".1f"))
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -60)
+            .attr("x", -height / 2)
+            .attr("dy", "0.71em")
+            .attr("text-anchor", "middle")
+            .text("Happiness Score");
+
+        g.selectAll(".bar")
+            .data(data)
+            .enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", function(d) { return x(d['Country or region']); })
+            .attr("y", function(d) { return y(d.Score); })
+            .attr("width", x.bandwidth())
+            .attr("height", function(d) { return height - y(d.Score); })
+            .attr("fill", function(d, i) { return color(i); })
+            .on('mouseover', tip.show)
+            .on('mouseout', tip.hide);
+    });
+</script>
+</body>
+</html>
